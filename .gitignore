@@ -13,5 +13,7 @@ pmd_report.html
 */bin
 target
 derby.log
-*/*.iml
-*/.idea/
+*.iml
+.idea/
+*.sublime-project
+*.sublime-workspace
