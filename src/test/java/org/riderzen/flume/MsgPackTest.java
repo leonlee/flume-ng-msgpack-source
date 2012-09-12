@@ -73,7 +73,6 @@ public class MsgPackTest {
         srv.serve(new ServerApp(loop,srv));
         try {
             srv.listen(1985);
-            loop.join();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,7 +101,7 @@ public class MsgPackTest {
 
             Assert.assertEquals("hello", res);
 
-//            iface.stop();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

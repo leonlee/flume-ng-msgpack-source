@@ -29,11 +29,17 @@ public class MsgPackServer implements IMsgPackSource {
     @Override
     public int sendMessage(byte[] binary) {
         try {
-            if (logger.isDebugEnabled()) {
-                String result = msgPack.read(binary, Templates.TString);
-                logger.debug("received message: {}", result);
+            Event event;
+            if (source.isNeedDecode()) {
+                String message = msgPack.read(binary, Templates.TString);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("received message: {}", message);
+                }
+                event = EventBuilder.withBody(message.getBytes());
+            } else {
+                event = EventBuilder.withBody(binary);
             }
-            Event event = EventBuilder.withBody(binary);
+
             source.getChannelProcessor().processEvent(event);
         } catch (Exception e) {
             logger.error("can't process message", e);

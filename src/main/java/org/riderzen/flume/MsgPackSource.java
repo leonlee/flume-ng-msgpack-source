@@ -9,7 +9,6 @@ import org.msgpack.rpc.loop.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,22 +25,24 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public static final String PORT = "port";
     public static final String BIND = "bind";
     public static final String THREADS = "threads";
+    public static final String DECODE = "decode";
+    public static final String NAME_PREFIX = "MsgPackSource_";
 
-    private String name;
     private int port;
     private String bindAddress;
     private int maxThreads;
+    private boolean needDecode;
+
     private Server server;
     private EventLoop loop;
-    private ExecutorService service;
 
     @Override
     public void configure(Context context) {
-        name = "MsgPackSource_" + counter.getAndIncrement();
+        setName(NAME_PREFIX + counter.getAndIncrement());
         port = context.getInteger(PORT);
         bindAddress = context.getString(BIND);
         maxThreads = context.getInteger(THREADS, 1);
-        service = Executors.newSingleThreadExecutor();
+        needDecode = context.getBoolean(DECODE, false);
 
         logger.info("port: " + port + " bindAddress: " + bindAddress + " maxThreads: " + maxThreads);
     }
@@ -50,8 +51,18 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public synchronized void start() {
         logger.info("Starting {}...", this);
 
-        Runnable runner = new MsgPackRunnable(this);
-        service.submit(runner);
+        try {
+            server = new Server();
+            server.serve(new MsgPackServer(this));
+            server.listen(bindAddress, port);
+
+            loop = EventLoop.start(Executors.newFixedThreadPool(maxThreads));
+        } catch (Exception e) {
+            logger.error("Can't start MsgPack source", e);
+
+            stop();
+            return;
+        }
 
         super.start();
         logger.info("MsgPack source {} was started.", getName());
@@ -61,8 +72,13 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public synchronized void stop() {
         logger.info("Stopping {}...", getName());
         try {
-            server.close();
-            loop.shutdown();
+            if (server != null) {
+                server.close();
+            }
+
+            if (loop != null) {
+                loop.shutdown();
+            }
         } catch (Exception e) {
             logger.error("Can't stop MsgPack source", e);
         }
@@ -70,35 +86,19 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
         logger.info("MsgPack source was stopped.");
     }
 
-    @Override
-    public synchronized String getName() {
-        return name;
+    public int getPort() {
+        return port;
     }
 
-    @Override
-    public synchronized void setName(String name) {
-        this.name = name;
+    public String getBindAddress() {
+        return bindAddress;
     }
 
-    private class MsgPackRunnable implements Runnable {
-        private MsgPackSource source;
+    public int getMaxThreads() {
+        return maxThreads;
+    }
 
-        public MsgPackRunnable(MsgPackSource source) {
-            this.source = source;
-        }
-
-        @Override
-        public void run() {
-            try {
-                server = new Server();
-                server.serve(new MsgPackServer(source));
-                server.listen(bindAddress, port);
-
-                loop = EventLoop.start(Executors.newFixedThreadPool(maxThreads));
-                loop.join();
-            } catch (Exception e) {
-                logger.error("Can't start MsgPack source", e);
-            }
-        }
+    public boolean isNeedDecode() {
+        return needDecode;
     }
 }
