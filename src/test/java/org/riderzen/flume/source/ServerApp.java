@@ -1,4 +1,4 @@
-package org.riderzen.flume;
+package org.riderzen.flume.source;
 
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;

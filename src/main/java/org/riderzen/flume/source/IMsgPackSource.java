@@ -1,4 +1,4 @@
-package org.riderzen.flume;
+package org.riderzen.flume.source;
 
 /**
  * User: guoqiang.li

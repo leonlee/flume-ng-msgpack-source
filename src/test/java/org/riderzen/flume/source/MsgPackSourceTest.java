@@ -1,4 +1,4 @@
-package org.riderzen.flume;
+package org.riderzen.flume.source;
 
 import org.apache.flume.*;
 import org.apache.flume.channel.ChannelProcessor;
@@ -10,6 +10,8 @@ import org.junit.Test;
 import org.msgpack.MessagePack;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.loop.EventLoop;
+import org.riderzen.flume.source.IMsgPackSource;
+import org.riderzen.flume.source.MsgPackSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
