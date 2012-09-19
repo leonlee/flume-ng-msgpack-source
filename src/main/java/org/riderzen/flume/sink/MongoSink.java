@@ -90,18 +90,25 @@ public class MongoSink extends AbstractSink implements Configurable {
         logger.debug("{} start to process event", getName());
 
         Channel channel = getChannel();
-        Transaction tx = channel.getTransaction();
-        Map<String, List<DBObject>> eventMap = new HashMap<String, List<DBObject>>();
+        Transaction tx = null;
 
-        Status status = parseEvents(channel, eventMap);
-        try{
-            saveEvents(eventMap);
+        Status status = Status.READY;
+        try {
+            tx = channel.getTransaction();
+            tx.begin();
+
+            status = parseEvents(channel);
+
             tx.commit();
         } catch (Exception e) {
-            logger.error("can't process events");
-            tx.rollback();
+            logger.error("can't process events", e);
+            if (tx != null) {
+                tx.rollback();
+            }
         } finally {
-            tx.close();
+            if (tx != null) {
+                tx.close();
+            }
         }
         logger.debug("{} processed event", getName());
         return status;
@@ -130,33 +137,40 @@ public class MongoSink extends AbstractSink implements Configurable {
         }
     }
 
-    private Status parseEvents(Channel channel, Map<String, List<DBObject>> eventMap) {
+    private Status parseEvents(Channel channel) {
         Status status = Status.READY;
-        for (int i = 0; i < batchSize; i++) {
-            Event event = channel.take();
-            if (event == null) {
-                status = Status.BACKOFF;
-                break;
-            } else {
-                switch (model) {
-                    case single:
-                        eventMap.put(collectionName, addEventToList(null, event));
+        Event event = null;
+        Map<String, List<DBObject>> eventMap = new HashMap<String, List<DBObject>>();
+        do {
+            for (int i = 0; i < batchSize; i++) {
+                event = channel.take();
+                if (event == null) {
+                    status = Status.BACKOFF;
+                    break;
+                } else {
+                    switch (model) {
+                        case single:
+                            eventMap.put(collectionName, addEventToList(null, event));
 
-                        break;
-                    case dynamic:
-                        Map<String, String> headers = event.getHeaders();
-                        String dynamicCollection = headers.get(COLLECTION);
-                        List<DBObject> documents = eventMap.get(dynamicCollection);
-                        addEventToList(documents, event);
+                            break;
+                        case dynamic:
+                            Map<String, String> headers = event.getHeaders();
+                            String dynamicCollection = headers.get(COLLECTION);
 
-                        if (documents == null) {
-                            eventMap.put(dynamicCollection, documents);
-                        }
+                            if (!eventMap.containsKey(dynamicCollection)) {
+                                eventMap.put(dynamicCollection, new ArrayList<DBObject>());
+                            }
 
-                        break;
+                            List<DBObject> documents = eventMap.get(dynamicCollection);
+                            addEventToList(documents, event);
+
+                            break;
+                    }
                 }
             }
-        }
+            saveEvents(eventMap);
+            eventMap.clear();
+        } while (event != null);
         return status;
     }
 

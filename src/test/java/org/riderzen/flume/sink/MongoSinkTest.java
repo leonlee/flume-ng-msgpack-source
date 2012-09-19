@@ -1,22 +1,20 @@
 package org.riderzen.flume.sink;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
+import com.mongodb.*;
 import org.apache.commons.collections.MapUtils;
+import org.apache.flume.*;
+import org.apache.flume.channel.MemoryChannel;
+import org.apache.flume.conf.Configurables;
+import org.apache.flume.event.EventBuilder;
+import org.json.simple.JSONObject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * User: guoqiang.li
@@ -27,14 +25,165 @@ public class MongoSinkTest {
     private static Mongo mongo;
     public static final String DBNAME = "myDb";
 
+    private static Context ctx = new Context();
+    private static Channel channel;
+
+
     @BeforeClass(groups = {"dev"})
     public static void setup() throws UnknownHostException {
         mongo = new Mongo("localhost", 27017);
+
+        Map<String, String> ctxMap = new HashMap<String, String>();
+        ctxMap.put(MongoSink.HOST, "localhost");
+        ctxMap.put(MongoSink.PORT, "27017");
+        ctxMap.put(MongoSink.DB_NAME, "test_events");
+        ctxMap.put(MongoSink.COLLECTION, "test_log");
+        ctxMap.put(MongoSink.BATCH_SIZE, "10");
+
+        ctx.putAll(ctxMap);
+
+        Context channelCtx = new Context();
+        channelCtx.put("capacity", "100000");
+        channelCtx.put("transactionCapacity", "100000");
+        channel = new MemoryChannel();
+        Configurables.configure(channel, channelCtx);
     }
 
     @AfterClass(groups = {"dev"})
     public static void tearDown() {
         mongo.dropDatabase(DBNAME);
+        mongo.dropDatabase("test_events");
+        mongo.close();
+    }
+
+    @Test(groups = "dev")
+    public void sinkDynamicTest() throws EventDeliveryException, InterruptedException {
+        ctx.put(MongoSink.MODEL, MongoSink.CollectionModel.dynamic.name());
+        MongoSink sink = new MongoSink();
+        Configurables.configure(sink, ctx);
+
+        sink.setChannel(channel);
+        sink.start();
+
+        JSONObject msg = new JSONObject();
+        msg.put("age", 11);
+        msg.put("birthday", new Date().getTime());
+
+        Transaction tx;
+
+        for (int i = 0; i < 100; i++) {
+            tx = channel.getTransaction();
+            tx.begin();
+            msg.put("name", "test" + i);
+            JSONObject header = new JSONObject();
+            header.put(MongoSink.COLLECTION, "my_events");
+
+            Event e = EventBuilder.withBody(msg.toJSONString().getBytes(), header);
+            channel.put(e);
+            tx.commit();
+            tx.close();
+        }
+        sink.process();
+        sink.stop();
+
+        for (int i = 0; i < 100; i++) {
+            msg.put("name", "test" + i);
+
+            System.out.println("i = " + i);
+
+            DB db = mongo.getDB("test_events");
+            DBCollection collection = db.getCollection("my_events");
+            DBCursor cursor = collection.find(new BasicDBObject(msg));
+            assertTrue(cursor.hasNext());
+            DBObject dbObject = cursor.next();
+            assertNotNull(dbObject);
+            assertEquals(dbObject.get("name"), msg.get("name"));
+            assertEquals(dbObject.get("age"), msg.get("age"));
+            assertEquals(dbObject.get("birthday"), msg.get("birthday"));
+        }
+    }
+
+    @Test(groups = "dev")
+    public void sinkDynamicTest2() throws EventDeliveryException, InterruptedException {
+        ctx.put(MongoSink.MODEL, MongoSink.CollectionModel.dynamic.name());
+        MongoSink sink = new MongoSink();
+        Configurables.configure(sink, ctx);
+
+        sink.setChannel(channel);
+        sink.start();
+
+        JSONObject msg = new JSONObject();
+        msg.put("age", 11);
+        msg.put("birthday", new Date().getTime());
+
+        Transaction tx;
+
+        for (int i = 0; i < 100; i++) {
+            tx = channel.getTransaction();
+            tx.begin();
+            msg.put("name", "test" + i);
+            JSONObject header = new JSONObject();
+            header.put(MongoSink.COLLECTION, "my_events" + i % 10);
+
+            Event e = EventBuilder.withBody(msg.toJSONString().getBytes(), header);
+            channel.put(e);
+            tx.commit();
+            tx.close();
+        }
+        sink.process();
+        sink.stop();
+
+        for (int i = 0; i < 100; i++) {
+            msg.put("name", "test" + i);
+
+            System.out.println("i = " + i);
+
+            DB db = mongo.getDB("test_events");
+            DBCollection collection = db.getCollection("my_events" + i % 10);
+            DBCursor cursor = collection.find(new BasicDBObject(msg));
+            assertTrue(cursor.hasNext());
+            DBObject dbObject = cursor.next();
+            assertNotNull(dbObject);
+            assertEquals(dbObject.get("name"), msg.get("name"));
+            assertEquals(dbObject.get("age"), msg.get("age"));
+            assertEquals(dbObject.get("birthday"), msg.get("birthday"));
+        }
+    }
+
+    @Test(groups = "dev")
+    public void sinkSingleModelTest() throws EventDeliveryException {
+        ctx.put(MongoSink.MODEL, MongoSink.CollectionModel.single.name());
+
+        MongoSink sink = new MongoSink();
+        Configurables.configure(sink, ctx);
+
+        sink.setChannel(channel);
+        sink.start();
+
+        Transaction tx = channel.getTransaction();
+        tx.begin();
+        JSONObject msg = new JSONObject();
+        msg.put("name", "test");
+        msg.put("age", 11);
+        msg.put("birthday", new Date().getTime());
+
+        Event e = EventBuilder.withBody(msg.toJSONString().getBytes());
+        channel.put(e);
+        tx.commit();
+        tx.close();
+
+        sink.process();
+        sink.stop();
+
+        DB db = mongo.getDB("test_events");
+        DBCollection collection = db.getCollection("test_log");
+        DBCursor cursor = collection.find(new BasicDBObject(msg));
+        assertTrue(cursor.hasNext());
+        DBObject dbObject = cursor.next();
+        assertNotNull(dbObject);
+        assertEquals(dbObject.get("name"), msg.get("name"));
+        assertEquals(dbObject.get("age"), msg.get("age"));
+        assertEquals(dbObject.get("birthday"), msg.get("birthday"));
     }
 
     @Test(groups = "dev")
