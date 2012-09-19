@@ -1,7 +1,15 @@
 package org.riderzen.flume.source;
 
+import org.msgpack.MessagePack;
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
+import org.msgpack.template.Template;
+import org.msgpack.template.Templates;
+import org.msgpack.type.MapValue;
+import org.msgpack.util.json.JSON;
+
+import java.io.IOException;
+
 
 /**
  *
@@ -34,5 +42,14 @@ public class ServerApp {
 
     public int hello2(int a) {
         return a + 2;
+    }
+
+    public int testMap(byte[] args) throws IOException {
+//        for (String arg : args) {
+            System.out.println("arg = " + args);
+        MessagePack mp = new MessagePack();
+        System.out.println("mp.read(args, Templates.TString) = " + mp.read(args, Templates.tMap(Templates.TString, Templates.TString)));
+//        }
+        return 0;
     }
 }

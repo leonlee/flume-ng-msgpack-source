@@ -43,7 +43,6 @@ public class MongoSink extends AbstractSink implements Configurable {
 
     private Mongo mongo;
     private DB db;
-    private DBCollection collection;
 
     private String host;
     private int port;
@@ -78,15 +77,6 @@ public class MongoSink extends AbstractSink implements Configurable {
         try {
             mongo = new Mongo(host, port);
             db = mongo.getDB(dbName);
-
-            switch (model) {
-                case single:
-                    collection = db.getCollection(collectionName);
-                    break;
-                case dynamic:
-                    collection = null;
-                    break;
-            }
         } catch (UnknownHostException e) {
             logger.error("Can't connect to mongoDB", e);
         }
@@ -150,17 +140,17 @@ public class MongoSink extends AbstractSink implements Configurable {
             } else {
                 switch (model) {
                     case single:
-                        eventMap.put(DEFAULT_COLLECTION, addEventToList(null, event));
+                        eventMap.put(collectionName, addEventToList(null, event));
 
                         break;
                     case dynamic:
                         Map<String, String> headers = event.getHeaders();
-                        String collectionName = headers.get(COLLECTION);
-                        List<DBObject> documents = eventMap.get(collectionName);
+                        String dynamicCollection = headers.get(COLLECTION);
+                        List<DBObject> documents = eventMap.get(dynamicCollection);
                         addEventToList(documents, event);
 
                         if (documents == null) {
-                            eventMap.put(collectionName, documents);
+                            eventMap.put(dynamicCollection, documents);
                         }
 
                         break;

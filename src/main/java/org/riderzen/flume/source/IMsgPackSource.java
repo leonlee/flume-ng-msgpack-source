@@ -6,5 +6,5 @@ package org.riderzen.flume.source;
  * Time: 下午5:11
  */
 public interface IMsgPackSource {
-    public int sendMessage(byte[] binary);
+    public int sendMessage(byte[] headersBytes, byte[] bodyBytes);
 }

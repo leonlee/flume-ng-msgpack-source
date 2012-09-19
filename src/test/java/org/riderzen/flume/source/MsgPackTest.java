@@ -12,6 +12,7 @@ import org.msgpack.unpacker.Converter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.msgpack.template.Templates.TString;
 import static org.msgpack.template.Templates.tList;
@@ -73,6 +74,7 @@ public class MsgPackTest {
         srv.serve(new ServerApp(loop,srv));
         try {
             srv.listen(1985);
+//            loop.join();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -110,6 +112,7 @@ public class MsgPackTest {
     public static interface RPCInterface {
         String helloRpc(String msg, int a);
         void stop();
+        int testMap(Map<String, String> map);
     }
 }
 

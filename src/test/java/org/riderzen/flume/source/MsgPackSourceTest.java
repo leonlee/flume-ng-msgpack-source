@@ -5,20 +5,22 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.msgpack.MessagePack;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.loop.EventLoop;
-import org.riderzen.flume.source.IMsgPackSource;
-import org.riderzen.flume.source.MsgPackSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.msgpack.template.Templates.TString;
+import static org.msgpack.template.Templates.tMap;
 
 /**
  * User: guoqiang.li
@@ -30,7 +32,7 @@ public class MsgPackSourceTest {
     private MsgPackSource source;
     private Channel channel;
 
-    public void startSource(Boolean needDecode, int portNum) throws InterruptedException {
+    public void startSource(int portNum) throws InterruptedException {
         source = new MsgPackSource();
         channel = new MemoryChannel();
 
@@ -51,7 +53,6 @@ public class MsgPackSourceTest {
 
         ctx.put(MsgPackSource.PORT, String.valueOf(portNum));
         ctx.put(MsgPackSource.BIND, "0.0.0.0");
-        ctx.put(MsgPackSource.DECODE, needDecode.toString());
         ctx.put(MsgPackSource.THREADS, String.valueOf(10));
 
         Configurables.configure(source, ctx);
@@ -60,9 +61,10 @@ public class MsgPackSourceTest {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void sourceTest() throws InterruptedException {
-        startSource(Boolean.FALSE, 41414);
+        startSource(41414);
         EventLoop cloop = EventLoop.defaultEventLoop();
         Client cli = null;
         MessagePack msgPack = new MessagePack();
@@ -71,15 +73,19 @@ public class MsgPackSourceTest {
 
             IMsgPackSource iface = cli.proxy(IMsgPackSource.class);
             String msg = "hello flume";
+            JSONObject headers = new JSONObject();
+            headers.put("collection", "test");
+            headers.put("lenght", 222);
+
             byte[] bytes = msgPack.write(msg, TString);
-            iface.sendMessage(bytes);
+            iface.sendMessage(msgPack.write(headers.toJSONString(), TString), bytes);
 
             Transaction transaction = channel.getTransaction();
             transaction.begin();
 
             Event event = channel.take();
 //            while ((event = channel.take()) != null) {
-            String result = msgPack.read(event.getBody(), TString);
+            String result = new String(event.getBody());
             Assert.assertEquals(msg, result);
             logger.info("taken msg: {}", result);
 //            }
@@ -96,7 +102,7 @@ public class MsgPackSourceTest {
 
     @Test
     public void sourceWithDecodeTest() throws InterruptedException {
-        startSource(Boolean.TRUE, 41418);
+        startSource(41418);
         EventLoop cloop = EventLoop.defaultEventLoop();
         Client cli = null;
         MessagePack msgPack = new MessagePack();
@@ -105,8 +111,12 @@ public class MsgPackSourceTest {
 
             IMsgPackSource iface = cli.proxy(IMsgPackSource.class);
             String msg = "hello flume";
+            JSONObject headers = new JSONObject();
+            headers.put("collection", "test");
+            headers.put("lenght", 222);
+
             byte[] bytes = msgPack.write(msg, TString);
-            iface.sendMessage(bytes);
+            iface.sendMessage(msgPack.write(headers.toJSONString(), TString), bytes);
 
             Transaction transaction = channel.getTransaction();
             transaction.begin();

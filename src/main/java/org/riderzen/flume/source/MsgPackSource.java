@@ -31,7 +31,6 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     private int port;
     private String bindAddress;
     private int maxThreads;
-    private boolean needDecode;
 
     private Server server;
     private EventLoop loop;
@@ -42,7 +41,6 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
         port = context.getInteger(PORT);
         bindAddress = context.getString(BIND);
         maxThreads = context.getInteger(THREADS, 1);
-        needDecode = context.getBoolean(DECODE, false);
 
         logger.info("port: " + port + " bindAddress: " + bindAddress + " maxThreads: " + maxThreads);
     }
@@ -96,9 +94,5 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
 
     public int getMaxThreads() {
         return maxThreads;
-    }
-
-    public boolean isNeedDecode() {
-        return needDecode;
     }
 }
