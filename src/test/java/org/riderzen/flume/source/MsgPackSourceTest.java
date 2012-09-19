@@ -6,13 +6,13 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.json.simple.JSONObject;
-import org.junit.Assert;
-import org.junit.Test;
 import org.msgpack.MessagePack;
 import org.msgpack.rpc.Client;
 import org.msgpack.rpc.loop.EventLoop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class MsgPackSourceTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(groups = "unit")
     public void sourceTest() throws InterruptedException {
         startSource(41414);
         EventLoop cloop = EventLoop.defaultEventLoop();
@@ -100,7 +100,7 @@ public class MsgPackSourceTest {
         }
     }
 
-    @Test
+    @Test(groups = {"unit"})
     public void sourceWithDecodeTest() throws InterruptedException {
         startSource(41418);
         EventLoop cloop = EventLoop.defaultEventLoop();

@@ -5,17 +5,18 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import org.apache.commons.collections.MapUtils;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * User: guoqiang.li
@@ -26,16 +27,17 @@ public class MongoSinkTest {
     private static Mongo mongo;
     public static final String DBNAME = "myDb";
 
-    @BeforeClass
+    @BeforeClass(groups = {"dev"})
     public static void setup() throws UnknownHostException {
         mongo = new Mongo("localhost", 27017);
     }
 
+    @AfterClass(groups = {"dev"})
     public static void tearDown() {
         mongo.dropDatabase(DBNAME);
     }
 
-    @Test
+    @Test(groups = "dev")
     public void dbTest() {
         DB db = mongo.getDB(DBNAME);
         db.getCollectionNames();
@@ -54,7 +56,7 @@ public class MongoSinkTest {
         assertTrue(hit);
     }
 
-    @Test
+    @Test(groups = "dev")
     public void collectionTest() {
         DB db = mongo.getDB(DBNAME);
         DBCollection myCollection = db.getCollection("myCollection");
@@ -75,4 +77,6 @@ public class MongoSinkTest {
 
         assertTrue(hit);
     }
+
+
 }

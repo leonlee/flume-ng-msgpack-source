@@ -1,7 +1,5 @@
 package org.riderzen.flume.source;
 
-import org.junit.Assert;
-import org.junit.Test;
 import org.msgpack.MessagePack;
 import org.msgpack.annotation.Message;
 import org.msgpack.rpc.Client;
@@ -9,6 +7,8 @@ import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
 import org.msgpack.type.Value;
 import org.msgpack.unpacker.Converter;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static org.msgpack.template.Templates.TString;
 import static org.msgpack.template.Templates.tList;
+import static org.testng.Assert.*;
 
 
 public class MsgPackTest {
@@ -25,7 +26,7 @@ public class MsgPackTest {
         public long version;
     }
 
-    @Test
+    @Test(groups = {"unit"})
     public void msgTest() throws Exception {
         TestMsg src = new TestMsg();
         src.name = "msgpack";
@@ -36,11 +37,11 @@ public class MsgPackTest {
 
         TestMsg dist = msgpack.read(bytes, TestMsg.class);
 
-        Assert.assertEquals("the name of message should be the same", src.name, dist.name);
-        Assert.assertEquals("the version of message should be the same", src.version, dist.version);
+        assertEquals(src.name, dist.name, "the name of message should be the same");
+        assertEquals(src.version, dist.version, "the version of message should be the same");
     }
 
-    @Test
+    @Test(groups = {"unit"})
     public void dynamicTest() throws Exception {
         List<String> src = new ArrayList<String>();
         src.add("msgpack");
@@ -51,18 +52,18 @@ public class MsgPackTest {
         byte[] raw = msgpack.write(src);
 
         List<String> dist1 = msgpack.read(raw, tList(TString));
-        Assert.assertNotNull(dist1);
-        Assert.assertEquals(src.size(), dist1.size());
+        assertNotNull(dist1);
+        assertEquals(src.size(), dist1.size());
         for (int i = 0; i < src.size(); i++) {
-            Assert.assertEquals(src.get(i), dist1.get(i));
+            assertEquals(src.get(i), dist1.get(i));
         }
 
         Value dynamic = msgpack.read(raw);
         List<String> dist2 = new Converter(dynamic).read(tList(TString));
-        Assert.assertNotNull(dist2);
-        Assert.assertEquals(src.size(), dist2.size());
+        assertNotNull(dist2);
+        assertEquals(src.size(), dist2.size());
         for (int i = 0; i < src.size(); i++) {
-            Assert.assertEquals(src.get(i), dist2.get(i));
+            assertEquals(src.get(i), dist2.get(i));
         }
 
     }
@@ -81,7 +82,7 @@ public class MsgPackTest {
 
     }
 
-    @Test
+    @Test(groups = {"unit"})
     public void rpcClientTest() {
         new Thread() {
             @Override
@@ -101,7 +102,7 @@ public class MsgPackTest {
 
             System.out.println("res: " + res);
 
-            Assert.assertEquals("hello", res);
+            assertEquals("hello", res);
 
 
         } catch (Exception e) {
