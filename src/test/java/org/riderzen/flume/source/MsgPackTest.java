@@ -7,9 +7,9 @@ import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
 import org.msgpack.type.Value;
 import org.msgpack.unpacker.Converter;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,14 +67,14 @@ public class MsgPackTest {
         }
 
     }
-//    @Test
-    public void rpcServerTest() {
+    @Test(groups = {"manu"})
+    public void rpcServerTest(int port) {
         final EventLoop loop = EventLoop.defaultEventLoop();
 
         Server srv = new Server();
         srv.serve(new ServerApp(loop,srv));
         try {
-            srv.listen(1985);
+            srv.listen(port);
 //            loop.join();
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,18 +83,17 @@ public class MsgPackTest {
     }
 
     @Test(groups = {"unit"})
-    public void rpcClientTest() {
+    public void rpcClientTest() throws UnknownHostException {
         new Thread() {
             @Override
             public void run() {
-                rpcServerTest();
+                rpcServerTest(1988);
             }
         }.start();
 
         EventLoop cloop = EventLoop.defaultEventLoop();
         Client cli = null;
-        try {
-            cli = new Client("localhost", 1985, cloop);
+            cli = new Client("localhost", 1988, cloop);
 
             RPCInterface iface = cli.proxy(RPCInterface.class);
 
@@ -105,9 +104,6 @@ public class MsgPackTest {
             assertEquals("hello", res);
 
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public static interface RPCInterface {

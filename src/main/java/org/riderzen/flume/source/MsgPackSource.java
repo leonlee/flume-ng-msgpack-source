@@ -25,7 +25,6 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public static final String PORT = "port";
     public static final String BIND = "bind";
     public static final String THREADS = "threads";
-    public static final String DECODE = "decode";
     public static final String NAME_PREFIX = "MsgPackSource_";
 
     private int port;

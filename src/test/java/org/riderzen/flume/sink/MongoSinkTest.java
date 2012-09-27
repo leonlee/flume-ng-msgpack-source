@@ -38,13 +38,13 @@ public class MongoSinkTest {
         ctxMap.put(MongoSink.PORT, "27017");
         ctxMap.put(MongoSink.DB_NAME, "test_events");
         ctxMap.put(MongoSink.COLLECTION, "test_log");
-        ctxMap.put(MongoSink.BATCH_SIZE, "10");
+        ctxMap.put(MongoSink.BATCH_SIZE, "100");
 
         ctx.putAll(ctxMap);
 
         Context channelCtx = new Context();
-        channelCtx.put("capacity", "100000");
-        channelCtx.put("transactionCapacity", "100000");
+        channelCtx.put("capacity", "1000000");
+        channelCtx.put("transactionCapacity", "1000000");
         channel = new MemoryChannel();
         Configurables.configure(channel, channelCtx);
     }
@@ -56,7 +56,7 @@ public class MongoSinkTest {
         mongo.close();
     }
 
-    @Test(groups = "dev")
+    @Test(groups = "dev", invocationCount = 1)
     public void sinkDynamicTest() throws EventDeliveryException, InterruptedException {
         ctx.put(MongoSink.MODEL, MongoSink.CollectionModel.dynamic.name());
         MongoSink sink = new MongoSink();
@@ -86,7 +86,7 @@ public class MongoSinkTest {
         sink.process();
         sink.stop();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             msg.put("name", "test" + i);
 
             System.out.println("i = " + i);
@@ -133,7 +133,7 @@ public class MongoSinkTest {
         sink.process();
         sink.stop();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             msg.put("name", "test" + i);
 
             System.out.println("i = " + i);

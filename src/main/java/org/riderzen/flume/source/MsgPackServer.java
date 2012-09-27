@@ -67,6 +67,7 @@ public class MsgPackServer implements IMsgPackSource {
             //noinspection unchecked
             event = EventBuilder.withBody(body, Charset.forName(CHARSET_NAME), headers);
 
+            //@TODO: add supporting batch model in future
             source.getChannelProcessor().processEvent(event);
         } catch (Exception e) {
             logger.error("can't process message", e);

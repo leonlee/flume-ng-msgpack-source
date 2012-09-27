@@ -66,8 +66,8 @@ public class MongoSink extends AbstractSink implements Configurable {
         collectionName = context.getString(COLLECTION, DEFAULT_COLLECTION);
         batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH);
 
-        logger.info("MongoSink {} context { host:{}, port:{}, username:{}, password:{}, model:{}, dbName:{}, collectionName:{} }",
-                new Object[]{getName(), host, port, username, password, model, dbName, collectionName});
+        logger.info("MongoSink {} context { host:{}, port:{}, username:{}, password:{}, model:{}, dbName:{}, collectionName:{}, batch: {} }",
+                new Object[]{getName(), host, port, username, password, model, dbName, collectionName, batchSize});
     }
 
     @Override
@@ -89,26 +89,11 @@ public class MongoSink extends AbstractSink implements Configurable {
     public Status process() throws EventDeliveryException {
         logger.debug("{} start to process event", getName());
 
-        Channel channel = getChannel();
-        Transaction tx = null;
-
         Status status = Status.READY;
         try {
-            tx = channel.getTransaction();
-            tx.begin();
-
-            status = parseEvents(channel);
-
-            tx.commit();
+            status = parseEvents();
         } catch (Exception e) {
             logger.error("can't process events", e);
-            if (tx != null) {
-                tx.rollback();
-            }
-        } finally {
-            if (tx != null) {
-                tx.close();
-            }
         }
         logger.debug("{} processed event", getName());
         return status;
@@ -121,8 +106,12 @@ public class MongoSink extends AbstractSink implements Configurable {
         }
 
         for (String collectionName : eventMap.keySet()) {
+            List<DBObject> docs = eventMap.get(collectionName);
+            if (logger.isDebugEnabled()) {
+                logger.debug("collection: {}, length: {}", collectionName, docs.size());
+            }
             //Warning: please change the WriteConcern level if you need high datum consistence.
-            CommandResult result = db.getCollection(collectionName).insert(eventMap.get(collectionName), WriteConcern.NORMAL).getLastError();
+            CommandResult result = db.getCollection(collectionName).insert(docs, WriteConcern.NORMAL).getLastError();
             if (result.ok()) {
                 String errorMessage = result.getErrorMessage();
                 if (errorMessage != null) {
@@ -137,20 +126,29 @@ public class MongoSink extends AbstractSink implements Configurable {
         }
     }
 
-    private Status parseEvents(Channel channel) {
+    private Status parseEvents() throws EventDeliveryException {
         Status status = Status.READY;
-        Event event = null;
+        Channel channel = getChannel();
+        Transaction tx = null;
         Map<String, List<DBObject>> eventMap = new HashMap<String, List<DBObject>>();
-        do {
+        try {
+            tx = channel.getTransaction();
+            tx.begin();
+
             for (int i = 0; i < batchSize; i++) {
-                event = channel.take();
+                Event event = channel.take();
                 if (event == null) {
                     status = Status.BACKOFF;
                     break;
                 } else {
                     switch (model) {
                         case single:
-                            eventMap.put(collectionName, addEventToList(null, event));
+                            if (!eventMap.containsKey(collectionName)) {
+                                eventMap.put(collectionName, new ArrayList<DBObject>());
+                            }
+
+                            List<DBObject> docs = eventMap.get(collectionName);
+                            addEventToList(docs, event);
 
                             break;
                         case dynamic:
@@ -165,12 +163,28 @@ public class MongoSink extends AbstractSink implements Configurable {
                             addEventToList(documents, event);
 
                             break;
+                        default:
+                            logger.error("can't support model: {}, please check configuration.", model);
                     }
                 }
             }
-            saveEvents(eventMap);
-            eventMap.clear();
-        } while (event != null);
+            if (!eventMap.isEmpty()) {
+                saveEvents(eventMap);
+            }
+
+            tx.commit();
+        } catch (Exception e) {
+            logger.error("can't process events", e);
+            if (tx != null) {
+                tx.rollback();
+            }
+
+            throw new EventDeliveryException(e);
+        } finally {
+            if (tx != null) {
+                tx.close();
+            }
+        }
         return status;
     }
 

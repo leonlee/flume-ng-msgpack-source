@@ -39,6 +39,10 @@ public class MsgPackSourceTest {
         channel.setName("Channel" + portNum);
 
         Context channelCtx = new Context();
+        channelCtx.put("capacity", "100000");
+        channelCtx.put("transactionCapacity", "100000");
+        channelCtx.put("keep-alive", "100000");
+
         Configurables.configure(channel, channelCtx);
 
         List<Channel> channels = new ArrayList<Channel>();
@@ -135,6 +139,26 @@ public class MsgPackSourceTest {
             e.printStackTrace();
         } finally {
             source.stop();
+        }
+    }
+
+    @Test(groups = {"manu"})
+    public void sourceServerTest() throws InterruptedException {
+        startSource(1985);
+
+        Transaction tx = channel.getTransaction();
+        tx.begin();
+
+        Event event = null;
+        while ((event = channel.take()) != null) {
+            logger.debug("=========================");
+            Map<String, String> headers = event.getHeaders();
+            for (String name : headers.keySet()) {
+                logger.debug("{}:{}", name, headers.get(name));
+            }
+            String message = new String(event.getBody());
+            logger.error("{}", message);
+            logger.debug("=========================");
         }
     }
 }

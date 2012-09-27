@@ -9,6 +9,7 @@ import org.msgpack.type.MapValue;
 import org.msgpack.util.json.JSON;
 
 import java.io.IOException;
+import java.util.Map;
 
 
 /**
@@ -17,7 +18,7 @@ import java.io.IOException;
  * Date: 12-9-11
  * Time: 上午10:35
  */
-public class ServerApp {
+public class ServerApp implements MsgPackTest.RPCInterface{
     private EventLoop loop;
     private Server srv;
     public ServerApp(EventLoop loop, Server srv) {
@@ -27,6 +28,7 @@ public class ServerApp {
 
     public String helloRpc(String msg, int a) {
         System.out.println("msg: " + msg + " a:" + a);
+
         return msg;
     }
 
@@ -34,6 +36,11 @@ public class ServerApp {
         System.out.println("stopping...");
         srv.close();
         loop.shutdown();
+    }
+
+    @Override
+    public int testMap(Map<String, String> map) {
+        return 0;
     }
 
     public int hello1(int a) {
