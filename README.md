@@ -13,5 +13,6 @@ Flume NG MessagePack source. The source was implemented by MessagePack-RPC.
 ## Configuration
 - - - 
 	type: org.riderzen.flume.source.MsgPackSource
-	bind: host name or ip address, '0.0.0.0'
-	port: port, 1985 
+	bind: host name or ip address [0.0.0.0]
+	port: port [1985]
+	threads: max threads of msgpack Eventloop [1]

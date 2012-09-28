@@ -26,6 +26,9 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public static final String BIND = "bind";
     public static final String THREADS = "threads";
     public static final String NAME_PREFIX = "MsgPackSource_";
+    public static final int DEFAULT_PORT = 1985;
+    public static final String DEFAULT_BIND = "0.0.0.0";
+    public static final int DEFAULT_THREADS = 1;
 
     private int port;
     private String bindAddress;
@@ -37,9 +40,9 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     @Override
     public void configure(Context context) {
         setName(NAME_PREFIX + counter.getAndIncrement());
-        port = context.getInteger(PORT);
-        bindAddress = context.getString(BIND);
-        maxThreads = context.getInteger(THREADS, 1);
+        bindAddress = context.getString(BIND, DEFAULT_BIND);
+        port = context.getInteger(PORT, DEFAULT_PORT);
+        maxThreads = context.getInteger(THREADS, DEFAULT_THREADS);
 
         logger.info("port: " + port + " bindAddress: " + bindAddress + " maxThreads: " + maxThreads);
     }
