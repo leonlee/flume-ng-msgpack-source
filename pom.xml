@@ -20,7 +20,6 @@
     <properties>
         <msgpack.version>0.6.6</msgpack.version>
         <msgpack-rpc.version>0.7.0</msgpack-rpc.version>
-        <mongo-java.version>2.9.0</mongo-java.version>
     </properties>
 
     <dependencies>
@@ -69,11 +68,6 @@
             <version>${msgpack-rpc.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
-            <version>${mongo-java.version}</version>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
