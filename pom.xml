@@ -13,9 +13,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.riderzen.flume</groupId>
-    <artifactId>flume-msgpack</artifactId>
+    <artifactId>flume-ng-msgpack-source</artifactId>
     <version>0.0.1</version>
-    <name>Flume messagepack source and sink</name>
+    <name>Flume NG messagepack source</name>
 
     <properties>
         <msgpack.version>0.6.6</msgpack.version>
