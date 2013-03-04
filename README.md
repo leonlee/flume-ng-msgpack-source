@@ -2,6 +2,10 @@ flume-ng-msgpack-source
 =============
 Flume NG MessagePack source. The source was implemented by MessagePack-RPC.
 
+Download:
+
+https://github.com/leonlee/flume-ng-msgpack-source/raw/master/flume-ng-msgpack-dist-1.0.0.tar.bz2
+
 ## Getting Started
 - - -
 1. Clone the repository
