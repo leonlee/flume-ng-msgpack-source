@@ -30,11 +30,13 @@ public class MsgPackServer implements IMsgPackSource {
     private MessagePack msgPack;
     private ThreadPoolExecutor pool;
     private int queueSize;
+    private int poolSize;
 
     public MsgPackServer(MsgPackSource source) {
         this.source = source;
         this.msgPack = new MessagePack();
-        this.pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(1000);
+        this.poolSize = source.getPoolSize();
+        this.pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(this.poolSize);
         this.queueSize = source.getQueueSize();
     }
 
@@ -42,8 +44,12 @@ public class MsgPackServer implements IMsgPackSource {
     @Override
     public int sendMessage(byte[] headersBytes, byte[] bodyBytes) {
         try {
-            int queueSize = this.pool.getQueue().size();
-            if (queueSize > queueSize) {
+            int poolQueueSize = this.pool.getQueue().size();
+            if (logger.isDebugEnabled()) {
+                logger.debug("pool size: {}, queue size: {}, active size: {}",
+                        new String[]{String.valueOf(pool.getPoolSize()), String.valueOf(poolQueueSize), String.valueOf(pool.getActiveCount())});
+            }
+            if (poolQueueSize > queueSize) {
                 logger.error("message was overflowed, the queue size is {}, the max size is {}", queueSize, queueSize);
                 if (bodyBytes != null) {
                     logger.error("dropped msg: {}", msgPack.read(bodyBytes, Templates.TString));
