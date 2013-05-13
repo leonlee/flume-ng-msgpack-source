@@ -20,6 +20,7 @@ https://github.com/leonlee/flume-ng-msgpack-source/raw/master/flume-ng-msgpack-d
 	bind: host name or ip address [0.0.0.0]
 	port: port [1985]
 	threads: max threads of msgpack Eventloop [1]
+	queueSize: the max queue size of blocking message @see java.util.concurrent.ThreadPoolExecutor#ThreadPoolExecutor.
 
 ### flume.conf sample
 - - -

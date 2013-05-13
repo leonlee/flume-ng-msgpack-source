@@ -26,13 +26,17 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public static final String BIND = "bind";
     public static final String THREADS = "threads";
     public static final String NAME_PREFIX = "MsgPackSource_";
+    public static final String QUEUE_SIZE = "queueSize";
+
     public static final int DEFAULT_PORT = 1985;
     public static final String DEFAULT_BIND = "0.0.0.0";
     public static final int DEFAULT_THREADS = 1;
+    public static final int DEFAULT_QUEUE_SIZE = 1000;
 
     private int port;
     private String bindAddress;
     private int maxThreads;
+    private int queueSize;
 
     private Server server;
     private EventLoop loop;
@@ -43,6 +47,7 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
         bindAddress = context.getString(BIND, DEFAULT_BIND);
         port = context.getInteger(PORT, DEFAULT_PORT);
         maxThreads = context.getInteger(THREADS, DEFAULT_THREADS);
+        queueSize = context.getInteger(QUEUE_SIZE, DEFAULT_QUEUE_SIZE);
 
         logger.info("port: " + port + " bindAddress: " + bindAddress + " maxThreads: " + maxThreads);
     }
@@ -96,5 +101,9 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
 
     public int getMaxThreads() {
         return maxThreads;
+    }
+
+    public int getQueueSize() {
+        return queueSize;
     }
 }
