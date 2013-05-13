@@ -101,4 +101,11 @@ public class MsgPackServer implements IMsgPackSource {
         });
     }
 
+    public void shutdown() {
+        if (pool != null) {
+            if (!pool.isShutdown()) {
+                pool.shutdownNow();
+            }
+        }
+    }
 }

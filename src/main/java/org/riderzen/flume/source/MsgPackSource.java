@@ -43,6 +43,7 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
 
     private Server server;
     private EventLoop loop;
+    private MsgPackServer msgPackServer;
 
     @Override
     public void configure(Context context) {
@@ -62,7 +63,8 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
 
         try {
             server = new Server();
-            server.serve(new MsgPackServer(this));
+            msgPackServer = new MsgPackServer(this);
+            server.serve(msgPackServer);
             server.listen(bindAddress, port);
 
             loop = EventLoop.start(Executors.newFixedThreadPool(maxThreads));
@@ -81,10 +83,12 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public synchronized void stop() {
         logger.info("Stopping {}...", getName());
         try {
+            if (msgPackServer != null) {
+                msgPackServer.shutdown();
+            }
             if (server != null) {
                 server.close();
             }
-
             if (loop != null) {
                 loop.shutdown();
             }
