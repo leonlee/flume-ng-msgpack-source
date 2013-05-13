@@ -32,7 +32,7 @@ public class MsgPackSource extends AbstractSource implements EventDrivenSource, 
     public static final int DEFAULT_PORT = 1985;
     public static final String DEFAULT_BIND = "0.0.0.0";
     public static final int DEFAULT_THREADS = 1;
-    public static final int DEFAULT_QUEUE_SIZE = 1000;
+    public static final int DEFAULT_QUEUE_SIZE = 3g000;
     public static final int DEFAULT_POOL_SIZE = 500;
 
     private int port;
